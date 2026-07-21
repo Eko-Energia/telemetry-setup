@@ -1,0 +1,17 @@
+apiVersion: 1
+
+# Auto-load any dashboard JSON dropped into this folder (tracked in git).
+# NOTE: provisioning is one-way (file -> Grafana). Editing a dashboard in the UI
+# does NOT write back to these files - export the JSON and commit it manually.
+providers:
+  - name: default
+    orgId: 1
+    type: file
+    # Allow the admin to tweak provisioned dashboards in the UI at runtime.
+    allowUiUpdates: true
+    # Pick up file changes without a restart.
+    updateIntervalSeconds: 10
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      # Mirror any subfolder structure as Grafana folders.
+      foldersFromFilesStructure: true

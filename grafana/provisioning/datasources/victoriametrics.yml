@@ -1,0 +1,14 @@
+apiVersion: 1
+
+# Auto-provision VictoriaMetrics as a datasource so Grafana has it from first boot.
+# VM speaks the Prometheus query API, so the datasource type is "prometheus".
+datasources:
+  - name: VictoriaMetrics
+    type: prometheus
+    # Fixed uid so dashboards-as-code can reference this datasource deterministically.
+    uid: victoriametrics
+    access: proxy
+    url: http://victoriametrics:8428
+    isDefault: true
+    jsonData:
+      httpMethod: POST

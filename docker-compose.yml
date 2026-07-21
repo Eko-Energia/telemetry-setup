@@ -44,3 +44,25 @@ services:
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - ./telegraf/can_decode.star:/etc/telegraf/can_decode.star:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - victoriametrics
+    ports:
+      - "3000:3000"
+    environment:
+      # Pit-wall monitors can view dashboards without logging in (read-only).
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      # Grafana runs as uid 472 - a bind-mount would be root-owned and unwritable,
+      # so its data lives in a named volume (Docker handles ownership).
+      - grafana-data:/var/lib/grafana
+      # Provisioning is read-only config (tracked in git) - auto-adds the VM datasource.
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+
+volumes:
+  grafana-data:
