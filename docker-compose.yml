@@ -19,5 +19,17 @@ services:
       - "1883:1883"
     volumes:
       - ./config:/mosquitto/config
-      - ./data:/mosquitto/data
-      - ./log:/mosquitto/log
+      - ./mq-data:/mosquitto/data
+      - ./mq-log:/mosquitto/log
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: victoriametrics
+    restart: unless-stopped
+    ports:
+      - "8428:8428"
+    command:
+      - "-storageDataPath=/victoria-metrics-data"
+      - "-retentionPeriod=100y"
+    volumes:
+      - ./vm-data:/victoria-metrics-data
