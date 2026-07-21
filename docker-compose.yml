@@ -1,0 +1,24 @@
+name: perla-telemetry-stack
+services:
+
+  watchtower:
+    image: containrrr/watchtower
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=21600
+      - DOCKER_API_VERSION=1.54
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: unless-stopped
+    # network_mode: host - doesn't work on Windows
+    ports:
+      - "100.85.141.67:1883:1883"      # IP z `tailscale ip -4`
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
