@@ -33,3 +33,14 @@ services:
       - "-retentionPeriod=100y"
     volumes:
       - ./vm-data:/victoria-metrics-data
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+      - victoriametrics
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - ./telegraf/can_decode.star:/etc/telegraf/can_decode.star:ro
