@@ -12,3 +12,4 @@ datasources:
     isDefault: true
     jsonData:
       httpMethod: POST
+      timeInterval: "1s"
