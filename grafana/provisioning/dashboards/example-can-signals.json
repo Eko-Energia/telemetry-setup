@@ -6,12 +6,15 @@
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
-  "refresh": "5s",
+  "refresh": "200ms",
+  "liveNow": true,
   "time": {
-    "from": "now-15m",
+    "from": "now-2m",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": ["200ms", "500ms", "1s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+  },
   "templating": {
     "list": [
       {
@@ -58,6 +61,7 @@
       "title": "can_signal_value  (message=$message, signal=$signal)",
       "datasource": { "type": "prometheus", "uid": "victoriametrics" },
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "maxDataPoints": 2000,
       "fieldConfig": {
         "defaults": {
           "custom": { "drawStyle": "line", "lineWidth": 1, "showPoints": "never" }

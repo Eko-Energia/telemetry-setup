@@ -12,4 +12,8 @@ datasources:
     isDefault: true
     jsonData:
       httpMethod: POST
-      timeInterval: "1s"
+      # Lower bound for the query step. This is NOT the dashboard refresh rate -
+      # it is the finest resolution a zoomed-in panel can ever ask for. 1ms is the
+      # floor of what VM can represent (millisecond timestamps), and the 512 kbps
+      # CAN bus cannot deliver a single signal faster than that anyway.
+      timeInterval: "1ms"

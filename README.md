@@ -256,7 +256,55 @@ Pliki są przeładowywane co 10 s, bez restartu kontenera. Podkatalogi stają si
 
 [example-can-signals.json](grafana/provisioning/dashboards/example-can-signals.json) to tylko demonstracja mechanizmu - można go skasować.
 
-Odświeżanie dashboardów jest odblokowane do 1 s (`GF_MIN_REFRESH_INTERVAL`), a Telegraf wysyła dane co 1 s, więc podglądy na żywo mają sens.
+### Tryb ~200 ms (near real-time)
+
+Cel: wykres przerysowuje się **co 200 ms** i pokazuje **wszystkie** próbki, jakie są w bazie. To dwie niezależne rzeczy i nie wolno ich mieszać:
+
+- **`refresh`** = jak często Grafana odpytuje i przerysowuje panel. Tu 200 ms.
+- **`step`** = odstęp między punktami w odpowiedzi na zapytanie. Nie ma trybu "daj surowe punkty" - zapytanie zwraca jeden punkt na `step`, więc żeby dostać wszystkie próbki, `step` musi być **≤ okres publikacji danych**. Mniejszy niż ten okres też jest zły: VM zaczyna powtarzać ostatnią wartość i odpowiedź puchnie bez zysku.
+
+Zmiana jednego elementu bez pozostałych nic nie da - to działa tylko jako komplet:
+
+| Gdzie | Ustawienie |
+|-------|-----------|
+| [docker-compose.yml](docker-compose.yml) (grafana) | `GF_MIN_REFRESH_INTERVAL` / `GF_DASHBOARDS_MIN_REFRESH_INTERVAL` = `200ms` - odblokowuje odświeżanie poniżej domyślnych 5 s |
+| [docker-compose.yml](docker-compose.yml) (victoriametrics) | `-search.latencyOffset=0s` |
+| [telegraf.conf](telegraf/telegraf.conf) | `flush_interval = "200ms"`, `metric_batch_size = 5000` |
+| [victoriametrics.yml](grafana/provisioning/datasources/victoriametrics.yml) | `timeInterval: "1ms"` - dolna granica `step`, ustawiona pod rozdzielczość danych, **nie** pod refresh |
+| dashboardy | `refresh: "200ms"`, `liveNow: true`, `maxDataPoints: 12000` na panelach `timeseries`, domyślny zakres `now-2m` |
+
+Dwie rzeczy, które łatwo przeoczyć:
+
+**`-search.latencyOffset`** - VictoriaMetrics zapisuje *każdą* próbkę, ale przy odczycie domyślnie traktuje ostatnie 30 s jako "niekompletne" i przy małym `step` spłaszcza/przytrzymuje końcówkę wyniku. Sensowne przy scrape'ach co 15-60 s, u nas oznaczałoby martwy ostatni fragment wykresu mimo danych już na dysku.
+
+**`maxDataPoints`** - realny `step` to `max(timeInterval, zakres / maxDataPoints)`, czyli **skaluje się z zoomem**: oddalony wykres jest rzadszy, przybliżony gęstnieje aż do podłogi `timeInterval`. Domyślne `maxDataPoints` (≈ szerokość panelu w pikselach) dałoby ~2 s przy zakresie 15 min, więc jest podniesione do `2000`:
+
+| zakres | `step` | punktów na serię | co widzisz |
+|--------|--------|------------------|------------|
+| 1 h | 1,8 s | 2 000 | przegląd sesji |
+| 15 min | 450 ms | 2 000 | przegląd sesji |
+| 2 min (domyślne) | 60 ms | 2 000 | podgląd na żywo |
+| 20 s | 10 ms | 2 000 | **każda próbka** przy cyklu CAN 10 ms |
+| 4 s | 2 ms | 2 000 | każda próbka |
+| 2 s | 1 ms (podłoga) | 2 000 | wszystko, co jest w bazie |
+
+Payload jest więc ograniczony do 2 000 punktów na serię niezależnie od zoomu, a przybliżanie odsłania coraz więcej realnych próbek - aż do 1 ms, czyli do granicy tego, co da się w ogóle zapisać. Żadnych `interval` na targetach: taka podłoga per panel blokowałaby właśnie ten zoom.
+
+Dlaczego nie więcej: panel ma ~800 pikseli szerokości, więc 2 000 punktów to już 2,5 próbki na pixel. Podniesienie do 12 000 daje 15 próbek w tej samej kolumnie ekranu - wykres wygląda **identycznie**, a jeden panel z 6 seriami przesyła wtedy ~2 MB JSON-a pięć razy na sekundę. Pełny detal wraca przy zoomie dokładnie wtedy, gdy piksele są w stanie go pokazać: przy typowym cyklu CAN 10-20 ms okno 20-40 s zawiera już **każdą** zapisaną próbkę.
+
+Cena: w podglądzie na żywo (`step` 60 ms) pojedynczy krótki pik między próbkami może nie trafić na wykres, bo VM zwraca ostatnią wartość z każdego kubełka. Jeśli na jakimś panelu piki są istotne (np. „Stres Prądowy"), właściwym narzędziem jest agregacja, nie zwiększanie `maxDataPoints`:
+
+```promql
+max_over_time(can_signal_value{signal="BMSMaster_MasterBatteryCurrent"}[$__interval])
+```
+
+Taki zapis pokazuje szczyt i jest tani niezależnie od zoomu.
+
+`maxDataPoints: 2000` siedzi **tylko na panelach `timeseries`**. Panele `stat`/`gauge`/`bargauge`/`table` redukują serię do jednej liczby (`lastNotNull`), więc ciągnięcie do nich tysięcy punktów na serię byłoby czystym marnotrawstwem - zostają przy domyślnym `maxDataPoints` (≈ szerokość panelu). Sparkline w panelach `stat` też tyle nie potrzebuje. Dotyczy to zwłaszcza paneli po `BMSMaster_PCB.*Therm.*Temp`, gdzie regex łapie kilkadziesiąt serii naraz.
+
+Koszt jest liniowy: `punkty × serie × 5 odświeżeń/s`, licząc tylko panele widoczne w viewporcie (Grafana odpytuje panele leniwie, po przewinięciu). Jeśli wykresy zaczną się zacinać, kolejność to: skrócić okno → zmniejszyć `maxDataPoints` → zejść z `refresh`.
+
+Do jednorazowej dokładnej analizy nie trzeba nic przekonfigurowywać: wyłącz auto-refresh, wybierz absolutny zakres i przybliż. Zapytanie staje się wtedy stałe (VM cache'uje wynik), a przy wąskim oknie punktów jest **mniej** niż w podglądzie na żywo, nie więcej.
 
 ---
 
