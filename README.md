@@ -155,27 +155,33 @@ sudo systemctl enable mosquitto
 3. Utwórz plik `/etc/mosquitto/conf.d/rpi.conf` oraz zapisz w nim:
 
 ```
+autosave_interval 60
+
+# limit kolejki: rozmiarem, nie liczbą sztuk 0 = bez limitu na sztuki
+max_queued_messages 0
+max_queued_bytes 536870912
+max_inflight_messages 1000
+
 # lokalny broker (urządzenia publikują tutaj)
 listener 1883
 allow_anonymous true
 
-# limit kolejki: rozmiarem, nie liczbą sztuk
-max_queued_messages 0                # 0 = bez limitu na sztuki
-max_queued_bytes 1073741824          # 1 GB
-
 # --- bridge do serwera, tylko wysyłka ---
 connection rpi-to-serwer
 address serwer:1883
-topic messages out 1                 # QoS 1 = kolejkowanie niewysłanych przy zerwaniu
+
+# QoS 1 = kolejkowanie niewysłanych przy zerwaniu
+topic messages out 1
 
 bridge_protocol_version mqttv50
-cleansession false                   # zachowaj kolejkę bridge'a między rozłączeniami
+cleansession false
 try_private true
 notifications true
-restart_timeout 10
+restart_timeout 2 10
+keepalive_interval 30
 ```
 
-W `address` podmień `serwer` na nazwę MagicDNS (z Tailscale) albo adres `100.x.y.z` serwera z tailnetu.
+W `address` podmień `serwer` na adres `100.x.y.z` serwera z Tailscale.
 
 Nie dodawaj tu opcji persystencji - bazowy `/etc/mosquitto/mosquitto.conf` z Debiana już ją zawiera, a duplikat sprawia, że Mosquitto nie wstaje (status 3).
 
