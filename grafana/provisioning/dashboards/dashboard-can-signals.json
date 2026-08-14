@@ -4,12 +4,12 @@
   "metadata": {
     "name": "dashboard-can-signals",
     "namespace": "default",
-    "uid": "4157bc76-370c-41ac-5-0e2e16046e02",
-    "resourceVersion": "1786454030048994",
-    "generation": 4,
-    "creationTimestamp": "2026-08-11T12:26:58Z",
+    "uid": "683c660c-a6ef-489d-b1ad-15e67a248d10",
+    "resourceVersion": "1786704364480988",
+    "generation": 9,
+    "creationTimestamp": "2026-08-11T13:31:43Z",
     "labels": {
-      "grafana.app/deprecatedInternalID": "1987172700676096"
+      "grafana.app/deprecatedInternalID": "2003468886990848"
     },
     "annotations": {
       "grafana.app/createdBy": "access-policy:service",
@@ -17,11 +17,11 @@
       "grafana.app/managerAllowsEdits": "true",
       "grafana.app/managerId": "default",
       "grafana.app/saved-from-ui": "Grafana v13.1.3 (45a27d64b6)",
-      "grafana.app/sourceChecksum": "0a703b433f68878b814eb373f6bbf7bd",
-      "grafana.app/sourcePath": "/etc/grafana/provisioning/dashboards/final14.json",
-      "grafana.app/sourceTimestamp": "1786451201000",
+      "grafana.app/sourceChecksum": "a54febaaa2979933270fe90093e70a63",
+      "grafana.app/sourcePath": "/etc/grafana/provisioning/dashboards/dashboard-can-signals.json",
+      "grafana.app/sourceTimestamp": "1786454539000",
       "grafana.app/updatedBy": "user:bfukw0oc7pon4d",
-      "grafana.app/updatedTimestamp": "2026-08-11T13:13:50Z"
+      "grafana.app/updatedTimestamp": "2026-08-14T10:46:04Z"
     }
   },
   "spec": {
@@ -116,7 +116,9 @@
                 }
               ],
               "transformations": [],
-              "queryOptions": {}
+              "queryOptions": {
+                "timeFrom": "1h"
+              }
             }
           },
           "vizConfig": {
@@ -149,17 +151,170 @@
                     "steps": [
                       {
                         "value": 0,
-                        "color": "green"
+                        "color": "red"
                       },
                       {
-                        "value": 80,
-                        "color": "red"
+                        "value": 50,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 100,
+                        "color": "green"
                       }
                     ]
                   },
                   "color": {
-                    "mode": "shades",
+                    "mode": "thresholds",
                     "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-106": {
+        "kind": "LibraryPanel",
+        "spec": {
+          "id": 106,
+          "title": "Temp. Sterowników Silników",
+          "libraryPanel": {
+            "name": "Temp. Sterowników Silników",
+            "uid": "cfv58stzwfk74f"
+          }
+        }
+      },
+      "panel-107": {
+        "kind": "LibraryPanel",
+        "spec": {
+          "id": 107,
+          "title": "Napięcie baterii głównej",
+          "libraryPanel": {
+            "name": "Napięcie baterii głównej",
+            "uid": "efv598vust1c0c"
+          }
+        }
+      },
+      "panel-108": {
+        "kind": "LibraryPanel",
+        "spec": {
+          "id": 108,
+          "title": "Prąd Baterii",
+          "libraryPanel": {
+            "name": "Prąd Baterii",
+            "uid": "dfv58vax5axa8a"
+          }
+        }
+      },
+      "panel-109": {
+        "kind": "LibraryPanel",
+        "spec": {
+          "id": 109,
+          "title": "Główna Temp.",
+          "libraryPanel": {
+            "name": "Główna Temp.",
+            "uid": "efv5a62genjeof"
+          }
+        }
+      },
+      "panel-110": {
+        "kind": "LibraryPanel",
+        "spec": {
+          "id": 110,
+          "title": "Max Temp. PCB",
+          "libraryPanel": {
+            "name": "Max Temp. PCB",
+            "uid": "cfv5aidaylji8a"
+          }
+        }
+      },
+      "panel-111": {
+        "kind": "Panel",
+        "spec": {
+          "id": 111,
+          "title": "Czas od ostatniej ramki",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "time() - max(timestamp(can_signal_value))",
+                        "legendFormat": "__auto",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.1.3",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "dtdurations",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 3,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 5,
+                        "color": "red"
+                      },
+                      {
+                        "value": 10,
+                        "color": "dark-red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds",
+                    "fixedColor": "#ad46ff"
                   }
                 },
                 "overrides": []
@@ -1855,255 +2010,11 @@
           }
         }
       },
-      "panel-32": {
-        "kind": "Panel",
-        "spec": {
-          "id": 32,
-          "title": "SoC",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "builder",
-                        "expr": "can_signal_value{signal=\"BMSMaster_MasterBatteryVoltage\"}",
-                        "interval": "",
-                        "legendFormat": "__auto",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "bargauge",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "displayMode": "lcd",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 16,
-                "minVizWidth": 8,
-                "namePlacement": "auto",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "text"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "volt",
-                  "min": 63,
-                  "max": 87,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 60,
-                        "color": "#EAB839"
-                      },
-                      {
-                        "value": 80,
-                        "color": "red"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "continuous-GrYlRd"
-                  }
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "panel-33": {
-        "kind": "Panel",
-        "spec": {
-          "id": 33,
-          "title": "SoC",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "builder",
-                        "expr": "can_signal_value{signal=\"BMSMaster_MasterBatteryVoltage\"}",
-                        "interval": "",
-                        "legendFormat": "__auto",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {
-                "maxDataPoints": 2000
-              }
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "enableFacetedFilter": false,
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "volt",
-                  "min": 63,
-                  "max": 87,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "red"
-                      },
-                      {
-                        "value": 68,
-                        "color": "yellow"
-                      },
-                      {
-                        "value": 72,
-                        "color": "green"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
-                    "gradientMode": "opacity",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "scope": "series",
-                      "options": "{__name__=\"can_signal_value\", db=\"telegraf\", message=\"BMSMaster_MasterVoltCurrTemp\", signal=\"BMSMaster_MasterBatteryVoltage\", unit=\"V\"}"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Soc"
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          }
-        }
-      },
       "panel-34": {
         "kind": "Panel",
         "spec": {
           "id": 34,
-          "title": "Czas do rozładowania",
+          "title": "Czas do rozładowania (hh:mm:ss)",
           "description": "",
           "links": [],
           "data": {
@@ -2122,7 +2033,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "(\n  77 * ( (avg(can_signal_value{signal=\"BMSMaster_MasterBatteryVoltage\"}) - 63) / 24 )\n) \n/ \n(abs(avg(can_signal_value{signal=\"BMSMaster_MasterBatteryCurrent\"})) + 0.001)",
+                        "expr": "(\n  (\n    77 * ( (avg(can_signal_value{signal=\"BMSMaster_MasterBatteryVoltage\"}) - 63) / 24 )\n  )\n  /\n  (abs(avg(can_signal_value{signal=\"BMSMaster_MasterBatteryCurrent\"})) + 0.001)\n) * 3600",
                         "legendFormat": "__auto",
                         "range": true
                       }
@@ -2133,7 +2044,9 @@
                 }
               ],
               "transformations": [],
-              "queryOptions": {}
+              "queryOptions": {
+                "timeFrom": "1h"
+              }
             }
           },
           "vizConfig": {
@@ -2160,22 +2073,26 @@
               },
               "fieldConfig": {
                 "defaults": {
-                  "unit": "h",
+                  "unit": "dthms",
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
                       {
                         "value": 0,
-                        "color": "text"
+                        "color": "red"
                       },
                       {
-                        "value": 80,
-                        "color": "red"
+                        "value": 1800,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 3600,
+                        "color": "green"
                       }
                     ]
                   },
                   "color": {
-                    "mode": "shades",
+                    "mode": "thresholds",
                     "fixedColor": "text"
                   }
                 },
@@ -2189,7 +2106,7 @@
         "kind": "Panel",
         "spec": {
           "id": 36,
-          "title": "Moc",
+          "title": "Zużycie na 100km",
           "description": "",
           "links": [],
           "data": {
@@ -2219,7 +2136,10 @@
                 }
               ],
               "transformations": [],
-              "queryOptions": {}
+              "queryOptions": {
+                "timeFrom": "1h",
+                "hideTimeOverride": false
+              }
             }
           },
           "vizConfig": {
@@ -2279,7 +2199,7 @@
         "kind": "Panel",
         "spec": {
           "id": 37,
-          "title": "Zużycie Energii",
+          "title": "Moc",
           "description": "",
           "links": [],
           "data": {
@@ -2358,7 +2278,7 @@
                   "group": "calculateField",
                   "spec": {
                     "options": {
-                      "alias": "Zużycie Energia",
+                      "alias": "Moc",
                       "binary": {
                         "left": {
                           "matcher": {
@@ -2540,7 +2460,9 @@
                 }
               ],
               "transformations": [],
-              "queryOptions": {}
+              "queryOptions": {
+                "timeFrom": "1h"
+              }
             }
           },
           "vizConfig": {
@@ -2802,7 +2724,7 @@
         "kind": "Panel",
         "spec": {
           "id": 40,
-          "title": "Napięcie Płytek (Główne)",
+          "title": "Napięcie Baterii",
           "description": "",
           "links": [],
           "data": {
@@ -2859,7 +2781,7 @@
               },
               "fieldConfig": {
                 "defaults": {
-                  "unit": "watt",
+                  "unit": "volt",
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
@@ -2892,140 +2814,13 @@
         }
       },
       "panel-41": {
-        "kind": "Panel",
+        "kind": "LibraryPanel",
         "spec": {
           "id": 41,
           "title": "Główna Temp.",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaste_MasterBatteryTemperatur\"}",
-                        "legendFormat": "Główna Temp.",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "enableFacetedFilter": false,
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "celsius",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 30,
-                        "color": "yellow"
-                      },
-                      {
-                        "value": 40,
-                        "color": "orange"
-                      },
-                      {
-                        "value": 45,
-                        "color": "red"
-                      },
-                      {
-                        "value": 50,
-                        "color": "dark-red"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "thresholds",
-                    "fixedColor": "text",
-                    "seriesBy": "last"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 27,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineStyle": {
-                      "fill": "solid"
-                    },
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  }
-                },
-                "overrides": []
-              }
-            }
+          "libraryPanel": {
+            "name": "Główna Temp.",
+            "uid": "efv5a62genjeof"
           }
         }
       },
@@ -3033,7 +2828,7 @@
         "kind": "Panel",
         "spec": {
           "id": 42,
-          "title": "Napięcie Płytek (Główne)",
+          "title": "Napięcie Baterii",
           "description": "",
           "links": [],
           "data": {
@@ -3053,7 +2848,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "can_signal_value{signal=\"BMSMaster_MasterBatteryVoltage\"}",
-                        "legendFormat": "Napięcie Płytek (Główne)",
+                        "legendFormat": "Napięcie Baterii",
                         "range": true
                       }
                     },
@@ -3428,975 +3223,6 @@
           }
         }
       },
-      "panel-44": {
-        "kind": "Panel",
-        "spec": {
-          "id": 44,
-          "title": "PBC1",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm1Temp\"}",
-                        "legendFormat": "Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm2Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp2",
-                        "range": true
-                      }
-                    },
-                    "refId": "B",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm3Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp3",
-                        "range": true
-                      }
-                    },
-                    "refId": "C",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm4Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp4",
-                        "range": true
-                      }
-                    },
-                    "refId": "D",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm5Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp5",
-                        "range": true
-                      }
-                    },
-                    "refId": "E",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm6Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp6",
-                        "range": true
-                      }
-                    },
-                    "refId": "F",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm7Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp7",
-                        "range": true
-                      }
-                    },
-                    "refId": "G",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm8Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp8",
-                        "range": true
-                      }
-                    },
-                    "refId": "H",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm9Temp\"}",
-                        "instant": false,
-                        "legendFormat": "Temp9",
-                        "range": true
-                      }
-                    },
-                    "refId": "I",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "bargauge",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "displayMode": "gradient",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 16,
-                "minVizWidth": 8,
-                "namePlacement": "auto",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "text"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "celsius",
-                  "max": 70,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 30,
-                        "color": "yellow"
-                      },
-                      {
-                        "value": 40,
-                        "color": "orange"
-                      },
-                      {
-                        "value": 45,
-                        "color": "red"
-                      },
-                      {
-                        "value": 50,
-                        "color": "dark-red"
-                      },
-                      {
-                        "value": 60,
-                        "color": "transparent"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "thresholds"
-                  }
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "panel-45": {
-        "kind": "Panel",
-        "spec": {
-          "id": 45,
-          "title": "Max Temp. PCB",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB1Therm.*\"})",
-                        "legendFormat": "PCB1",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB2Therm.*\"})",
-                        "instant": false,
-                        "legendFormat": "PCB2",
-                        "range": true
-                      }
-                    },
-                    "refId": "B",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB3Therm.*\"})",
-                        "instant": false,
-                        "legendFormat": "PCB3",
-                        "range": true
-                      }
-                    },
-                    "refId": "C",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB4Therm.*\"})",
-                        "instant": false,
-                        "legendFormat": "PCB4",
-                        "range": true
-                      }
-                    },
-                    "refId": "D",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB5Therm.*\"})",
-                        "instant": false,
-                        "legendFormat": "PCB5",
-                        "range": true
-                      }
-                    },
-                    "refId": "E",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB6Therm.*\"})",
-                        "instant": false,
-                        "legendFormat": "PCB6",
-                        "range": true
-                      }
-                    },
-                    "refId": "F",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max(can_signal_value{signal=~\"BMSMaster_PCB7Therm.*\"})",
-                        "instant": false,
-                        "legendFormat": "PCB7",
-                        "range": true
-                      }
-                    },
-                    "refId": "G",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "bargauge",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "displayMode": "gradient",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 16,
-                "minVizWidth": 8,
-                "namePlacement": "auto",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "text"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "celsius",
-                  "max": 70,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 30,
-                        "color": "yellow"
-                      },
-                      {
-                        "value": 40,
-                        "color": "orange"
-                      },
-                      {
-                        "value": 45,
-                        "color": "red"
-                      },
-                      {
-                        "value": 50,
-                        "color": "dark-red"
-                      },
-                      {
-                        "value": 60,
-                        "color": "transparent"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "thresholds"
-                  }
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "panel-46": {
-        "kind": "Panel",
-        "spec": {
-          "id": 46,
-          "title": "Temp1 PCB",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB1Therm1Temp\"}",
-                        "legendFormat": "PCB1Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB2Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB2Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "B",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB3Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB3Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "C",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB4Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB4Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "D",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB5Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB5Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "E",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB6Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB6Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "F",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB7Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB7Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "G",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB8Therm1Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB8Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "H",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"BMSMaster_PCB2Therm9Temp\"}",
-                        "instant": false,
-                        "legendFormat": "PCB9Temp1",
-                        "range": true
-                      }
-                    },
-                    "refId": "I",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "bargauge",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "displayMode": "gradient",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 16,
-                "minVizWidth": 8,
-                "namePlacement": "auto",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "text"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "celsius",
-                  "max": 70,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 30,
-                        "color": "yellow"
-                      },
-                      {
-                        "value": 40,
-                        "color": "orange"
-                      },
-                      {
-                        "value": 45,
-                        "color": "red"
-                      },
-                      {
-                        "value": 50,
-                        "color": "dark-red"
-                      },
-                      {
-                        "value": 60,
-                        "color": "transparent"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "thresholds"
-                  }
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "panel-47": {
-        "kind": "Panel",
-        "spec": {
-          "id": 47,
-          "title": "Temp. Sterowników Silników",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"LeftMotorControllerTemp\"}",
-                        "legendFormat": "MOT-L (Sterownik Lewy)",
-                        "range": true
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "victoriametrics"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "can_signal_value{signal=\"RightMotorControllerTemp\"}",
-                        "instant": false,
-                        "legendFormat": "MOT-R (Sterownik Prawy)",
-                        "range": true
-                      }
-                    },
-                    "refId": "B",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "13.1.3",
-            "spec": {
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "enableFacetedFilter": false,
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "celsius",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 30,
-                        "color": "yellow"
-                      },
-                      {
-                        "value": 40,
-                        "color": "orange"
-                      },
-                      {
-                        "value": 45,
-                        "color": "red"
-                      },
-                      {
-                        "value": 50,
-                        "color": "dark-red"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  }
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
       "panel-48": {
         "kind": "Panel",
         "spec": {
@@ -4622,15 +3448,15 @@
                         "color": "semi-dark-green"
                       },
                       {
-                        "value": 70,
+                        "value": 50,
                         "color": "yellow"
                       },
                       {
-                        "value": 100,
+                        "value": 70,
                         "color": "orange"
                       },
                       {
-                        "value": 130,
+                        "value": 100,
                         "color": "red"
                       }
                     ]
@@ -4646,13 +3472,157 @@
         }
       },
       "panel-58": {
-        "kind": "LibraryPanel",
+        "kind": "Panel",
         "spec": {
           "id": 58,
           "title": "Prędkość",
-          "libraryPanel": {
-            "name": "Prędkość",
-            "uid": "cfuno59ymgow0f"
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "avg(can_signal_value{signal=~\"SensorFL_Wheel_Speed|SensorFR_Wheel_Speed|SensorRL_Wheel_Speed|SensorRR_Wheel_Speed\"})",
+                        "interval": "",
+                        "legendFormat": "__auto",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 2000
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.1.3",
+            "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "velocitykmh",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "light-green"
+                      },
+                      {
+                        "value": 30,
+                        "color": "semi-dark-green"
+                      },
+                      {
+                        "value": 50,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 70,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 100,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds",
+                    "fixedColor": "text",
+                    "seriesBy": "last"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 27,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 1,
+                    "pointSize": 4,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "avg(can_signal_value{signal=~\"SensorFL_Wheel_Speed|SensorFR_Wheel_Speed|SensorRL_Wheel_Speed|SensorRR_Wheel_Speed\"})"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Prędkość"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           }
         }
       },
@@ -6407,7 +5377,7 @@
                         "x": 0,
                         "y": 0,
                         "width": 12,
-                        "height": 10,
+                        "height": 8,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-37"
@@ -6445,6 +5415,45 @@
                       "spec": {
                         "x": 12,
                         "y": 5,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-36"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 20,
+                        "y": 5,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-111"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 8,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-42"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 9,
                         "width": 6,
                         "height": 5,
                         "element": {
@@ -6457,7 +5466,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 18,
-                        "y": 5,
+                        "y": 9,
                         "width": 6,
                         "height": 5,
                         "element": {
@@ -6469,36 +5478,10 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 0,
-                        "y": 10,
-                        "width": 12,
-                        "height": 10,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-42"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 12,
-                        "y": 10,
-                        "width": 12,
-                        "height": 4,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-36"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
                         "x": 12,
                         "y": 14,
                         "width": 12,
-                        "height": 10,
+                        "height": 8,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-39"
@@ -6509,9 +5492,22 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 20,
+                        "y": 15,
                         "width": 12,
-                        "height": 10,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-108"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 23,
+                        "width": 12,
+                        "height": 9,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-41"
@@ -6537,7 +5533,7 @@
                         "x": 0,
                         "y": 0,
                         "width": 12,
-                        "height": 10,
+                        "height": 12,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-43"
@@ -6550,23 +5546,10 @@
                         "x": 12,
                         "y": 0,
                         "width": 12,
-                        "height": 10,
+                        "height": 5,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-46"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 0,
-                        "y": 10,
-                        "width": 12,
-                        "height": 9,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-44"
+                          "name": "panel-107"
                         }
                       }
                     },
@@ -6574,12 +5557,12 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 10,
+                        "y": 5,
                         "width": 12,
-                        "height": 9,
+                        "height": 8,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-45"
+                          "name": "panel-109"
                         }
                       }
                     },
@@ -6587,12 +5570,12 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 19,
+                        "y": 12,
                         "width": 12,
-                        "height": 10,
+                        "height": 9,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-47"
+                          "name": "panel-110"
                         }
                       }
                     },
@@ -6600,9 +5583,9 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 19,
+                        "y": 13,
                         "width": 12,
-                        "height": 10,
+                        "height": 8,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-48"
@@ -6840,6 +5823,19 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-72"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 31,
+                        "width": 12,
+                        "height": 9,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-106"
                         }
                       }
                     }
@@ -7099,7 +6095,7 @@
                         "height": 10,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-33"
+                          "name": "panel-24"
                         }
                       }
                     },
@@ -7151,7 +6147,7 @@
                         "height": 10,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-24"
+                          "name": "panel-23"
                         }
                       }
                     },
@@ -7164,32 +6160,6 @@
                         "height": 10,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-32"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 0,
-                        "y": 20,
-                        "width": 12,
-                        "height": 10,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-23"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 12,
-                        "y": 20,
-                        "width": 12,
-                        "height": 10,
-                        "element": {
-                          "kind": "ElementReference",
                           "name": "panel-12"
                         }
                       }
@@ -7198,7 +6168,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 30,
+                        "y": 20,
                         "width": 12,
                         "height": 10,
                         "element": {
@@ -7211,7 +6181,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 30,
+                        "y": 20,
                         "width": 12,
                         "height": 10,
                         "element": {
@@ -7224,7 +6194,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 40,
+                        "y": 30,
                         "width": 12,
                         "height": 10,
                         "element": {
@@ -7237,7 +6207,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 40,
+                        "y": 30,
                         "width": 12,
                         "height": 10,
                         "element": {
@@ -7250,7 +6220,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 50,
+                        "y": 40,
                         "width": 24,
                         "height": 9,
                         "element": {
