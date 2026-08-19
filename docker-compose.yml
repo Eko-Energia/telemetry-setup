@@ -39,6 +39,8 @@ services:
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - ./telegraf/can_decode.star:/etc/telegraf/can_decode.star:ro
+    ports:
+      - "8000:8000"
 
   grafana:
     image: grafana/grafana:latest
