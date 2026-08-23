@@ -22,10 +22,10 @@
         "label": "Message",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "victoriametrics" },
-        "definition": "label_values(can_signal_value, message)",
+        "definition": "label_values(can_signal, message)",
         "query": {
           "qryType": 1,
-          "query": "label_values(can_signal_value, message)",
+          "query": "label_values(can_signal, message)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "includeAll": true,
@@ -39,10 +39,10 @@
         "label": "Signal",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "victoriametrics" },
-        "definition": "label_values(can_signal_value{message=~\"$message\"}, signal)",
+        "definition": "label_values(can_signal{message=~\"$message\"}, signal)",
         "query": {
           "qryType": 1,
-          "query": "label_values(can_signal_value{message=~\"$message\"}, signal)",
+          "query": "label_values(can_signal{message=~\"$message\"}, signal)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "includeAll": true,
@@ -58,7 +58,7 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "can_signal_value  (message=$message, signal=$signal)",
+      "title": "can_signal  (message=$message, signal=$signal)",
       "datasource": { "type": "prometheus", "uid": "victoriametrics" },
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
       "maxDataPoints": 2000,
@@ -75,9 +75,15 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "victoriametrics" },
-          "expr": "can_signal_value{message=~\"$message\", signal=~\"$signal\"}",
-          "legendFormat": "{{message}} / {{signal}} ({{unit}})",
+          "expr": "can_signal{message=~\"$message\", signal=~\"$signal\", signal!=\"\"}",
+          "legendFormat": "{{message}} / {{signal}} {{unit}}",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "can_signal{message=~\"$message\", signal=~\"$signal\", signal=\"\"}",
+          "legendFormat": "{{message}} (heartbeat)",
+          "refId": "B"
         }
       ]
     },
@@ -91,7 +97,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "victoriametrics" },
-          "expr": "can_signal_value{message=~\"$message\", signal=~\"$signal\"}",
+          "expr": "can_signal{message=~\"$message\", signal=~\"$signal\"}",
           "instant": true,
           "format": "table",
           "refId": "A"
