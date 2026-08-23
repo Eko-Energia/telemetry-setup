@@ -118,19 +118,41 @@ Na twoim serwerze zostaną udostępnione usługi pod danymi portami:
 
 Payloady innego typu (`subscribe`, `raw`, `transmit`) są odrzucane przez [can_decode.star](telegraf/can_decode.star).
 
+Klucz `signals` może być pustą listą albo nie wystąpić wcale - takie są ramki heartbeat, które istnieją tylko po to, żeby dowieść, że płytka żyje. `timestamp` jest zawsze.
+
 ### Wyjście - metryki
 
 Każdy sygnał staje się osobną serią czasową, ze znacznikiem czasu **z payloadu**, a nie z momentu odbioru:
 
 ```
-can_signal_value{message="BMS_Status", signal="Battery_Voltage", unit="V"} 48.6
+can_signal{message="BMS_Status", signal="Battery_Voltage", unit="V"} 48.6
 ```
 
 Czyli w Grafanie / PromQL:
 
 ```promql
-can_signal_value{message="BMS_Status", signal="Battery_Voltage"}
+can_signal{message="BMS_Status", signal="Battery_Voltage"}
 ```
+
+#### Ramki bez sygnałów
+
+Ramka bez sygnałów dostaje **jedną** próbkę, bez etykiet `signal` i `unit` - bo należy do ramki, nie do pomiaru:
+
+```
+can_signal{message="Emergency"} 1
+```
+
+Wartość `1` nic nie znaczy (to konwencja metryk typu info); niesiona informacja to **znacznik czasu**. Model VM nie zna próbek bez wartości, więc jakaś liczba musi tam być - `1` nie udaje pomiaru, w odróżnieniu od `0`.
+
+Brakująca etykieta nie pasuje do żadnego niepustego regexa ani dopasowania dokładnego, więc **każde zapytanie o konkretne sygnały pomija te próbki samo z siebie**. Wyjątkiem jest `signal=~".*"`, bo `.*` pasuje do pustego stringa.
+
+Wiek każdej ramki - pustej i niepustej, jednym zapytaniem:
+
+```promql
+time() - max by (message) (timestamp(can_signal))
+```
+
+Same ramki heartbeat: `can_signal{signal=""}`. Wyłącznie pomiary: `can_signal{signal!=""}`.
 
 Zmiana struktury payloadu po stronie samochodu wymaga zmiany w [can_decode.star](telegraf/can_decode.star) - to jedyne miejsce w stacku, które zna format danych.
 
@@ -221,7 +243,7 @@ mosquitto_pub -h localhost -t messages -m 'test' -q 1
 
 Pojawienie się `messages test` w oknie `mosquitto_sub` oznacza, że ścieżka transportowa działa.
 
-Żeby sprawdzić całość razem z dekodowaniem, opublikuj prawdziwy payload i zajrzyj do VictoriaMetrics - `http://<serwer>:8428/vmui`, zapytanie `can_signal_value`.
+Żeby sprawdzić całość razem z dekodowaniem, opublikuj prawdziwy payload i zajrzyj do VictoriaMetrics - `http://<serwer>:8428/vmui`, zapytanie `can_signal`.
 
 ### Test buforowania
 
@@ -295,7 +317,7 @@ Dlaczego nie więcej: panel ma ~800 pikseli szerokości, więc 2 000 punktów to
 Cena: w podglądzie na żywo (`step` 60 ms) pojedynczy krótki pik między próbkami może nie trafić na wykres, bo VM zwraca ostatnią wartość z każdego kubełka. Jeśli na jakimś panelu piki są istotne (np. „Stres Prądowy"), właściwym narzędziem jest agregacja, nie zwiększanie `maxDataPoints`:
 
 ```promql
-max_over_time(can_signal_value{signal="BMSMaster_MasterBatteryCurrent"}[$__interval])
+max_over_time(can_signal{signal="BMSMaster_MasterBatteryCurrent"}[$__interval])
 ```
 
 Taki zapis pokazuje szczyt i jest tani niezależnie od zoomu.

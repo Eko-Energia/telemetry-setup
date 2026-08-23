@@ -26,6 +26,15 @@ services:
       # would delay the live edge of every graph - the data is already on disk.
       - "-search.latencyOffset=0s"
       # NOTE: do NOT add -dedup.minScrapeInterval - it would drop sub-second samples.
+      # Metric name is "can_signal", not "can_signal_value". VM names influx data
+      # "{measurement}_{field}" by default; with a single field it uses the bare
+      # measurement instead. can_decode.star MUST keep emitting exactly one field
+      # per metric - a second field would silently rename every series.
+      - "-influxSkipSingleField=true"
+      # Drop the "db" label. VM derives it from the influx "?db=" query arg, which
+      # Telegraf always sets to "telegraf" - one constant value, zero information,
+      # and it leaks into every Grafana series-override matcher.
+      - "-influxDBLabel="
     volumes:
       - ./vm-data:/victoria-metrics-data
 
