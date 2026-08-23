@@ -32,7 +32,7 @@ Kluczowa właściwość: **utrata łącza nie powoduje utraty danych**. Lokalny 
 
 ## Struktura repozytorium
 
-```
+```text
 .
 ├── docker-compose.yml                   # cały stack serwerowy
 ├── config/
@@ -124,7 +124,7 @@ Klucz `signals` może być pustą listą albo nie wystąpić wcale - takie są r
 
 Każdy sygnał staje się osobną serią czasową, ze znacznikiem czasu **z payloadu**, a nie z momentu odbioru:
 
-```
+```text
 can_signal{message="BMS_Status", signal="Battery_Voltage", unit="V"} 48.6
 ```
 
@@ -138,7 +138,7 @@ can_signal{message="BMS_Status", signal="Battery_Voltage"}
 
 Ramka bez sygnałów dostaje **jedną** próbkę, bez etykiet `signal` i `unit` - bo należy do ramki, nie do pomiaru:
 
-```
+```text
 can_signal{message="Emergency"} 1
 ```
 
@@ -176,7 +176,7 @@ sudo systemctl enable mosquitto
 
 3. Utwórz plik `/etc/mosquitto/conf.d/rpi.conf` oraz zapisz w nim:
 
-```
+```conf
 autosave_interval 60
 
 # limit kolejki: rozmiarem, nie liczbą sztuk 0 = bez limitu na sztuki

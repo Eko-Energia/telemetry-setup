@@ -75,9 +75,15 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "victoriametrics" },
-          "expr": "can_signal{message=~\"$message\", signal=~\"$signal\"}",
-          "legendFormat": "{{message}} / {{signal}} ({{unit}})",
+          "expr": "can_signal{message=~\"$message\", signal=~\"$signal\", signal!=\"\"}",
+          "legendFormat": "{{message}} / {{signal}} {{unit}}",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "can_signal{message=~\"$message\", signal=~\"$signal\", signal=\"\"}",
+          "legendFormat": "{{message}} (heartbeat)",
+          "refId": "B"
         }
       ]
     },
