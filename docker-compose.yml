@@ -25,6 +25,13 @@ services:
       # points (default 30s) as "possibly incomplete". With 200ms telemetry that
       # would delay the live edge of every graph - the data is already on disk.
       - "-search.latencyOffset=0s"
+      # Pin the lookbehind window to the query's step instead of letting VM
+      # extend it to fill gaps. Without this, a sample gets carried forward into
+      # every subsequent grid slot until the next one arrives - flat tails and
+      # phantom points where nothing was actually received. Event-driven CAN
+      # frames have no fixed interval, so a static -search.maxLookback can't
+      # work here; tying it to step adapts per query.
+      - "-search.setLookbackToStep=true"
       # NOTE: do NOT add -dedup.minScrapeInterval - it would drop sub-second samples.
       # Metric name is "can_signal", not "can_signal_value". VM names influx data
       # "{measurement}_{field}" by default; with a single field it uses the bare
