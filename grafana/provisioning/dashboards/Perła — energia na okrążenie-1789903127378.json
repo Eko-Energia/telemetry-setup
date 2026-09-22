@@ -1,0 +1,3534 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "perla-lap-energy",
+    "namespace": "default",
+    "uid": "3fd671e3-519a-483c-b449-cb645a672030",
+    "resourceVersion": "1789868671270993",
+    "generation": 42,
+    "creationTimestamp": "2026-09-19T12:46:09Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "2614331934412800"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:ffy41d7azm8lcb",
+      "grafana.app/saved-from-ui": "Grafana v13.2.1 (56cd3e9288)",
+      "grafana.app/updatedBy": "user:ffy41d7azm8lcb",
+      "grafana.app/updatedTimestamp": "2026-09-20T01:44:31Z"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "description": "Zużycie energii w podziale na okrążenia. Granice okrążeń z timingu organizatora (esc_lap_*), moc z CAN (PackCurrent × PackVoltage).",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Zużycie energii na okrążenie",
+          "description": "Jeden słupek = jedno ukończone okrążenie, X = numer okrążenia. Przy większej liczbie okrążeń panel przewija się w poziomie. Okrążenie w toku nie ma jeszcze granicy końcowej, więc się nie pokazuje; okrążenie zaczęte przed początkiem zakresu czasu jest odrzucane w całości, żeby nie pokazywać uciętego słupka. Okrążenia, które w mniej niż 95 % były realną jazdą (pit, out lap, flaga, ładowanie, postój, dziury w CAN), nie mają tu słupka — pełna lista jest w tabeli niżej.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "clamp_min($psign * sum(avg_over_time(can_signal{signal=\"BMSMaster_JK_PackCurrent\"}[$__interval])) * sum(avg_over_time(can_signal{signal=\"BMSMaster_JK_PackVoltage\"}[$__interval])), 0) * $__interval_ms / 3600000",
+                        "instant": false,
+                        "legendFormat": "Wh",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "((first_over_time(esc_lap_number[$lapmax] offset -$lapmax) >= $lapfrom) <= $lapto) and on(car) (first_over_time(esc_lap_start_timestamp_seconds[$lapmax] offset -$lapmax) <= time()) and on(car) (first_over_time(esc_lap_start_timestamp_seconds[$lapmax] offset -$lapmax) >= ${__from:date:seconds})",
+                        "instant": false,
+                        "legendFormat": "Okrążenie",
+                        "range": true
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[$__interval]))) < bool 50) or vector(0)), 1), 0) * $__interval_ms / 1000 / first_over_time(esc_lap_duration_seconds[$lapmax] offset -$lapmax)",
+                        "instant": false,
+                        "legendFormat": "Jazda",
+                        "range": true
+                      }
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "inner"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "groupBy",
+                  "spec": {
+                    "options": {
+                      "fields": {
+                        "Jazda": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Okrążenie": {
+                          "aggregations": [],
+                          "operation": "groupby"
+                        },
+                        "Wh": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "filterByValue",
+                  "spec": {
+                    "options": {
+                      "filters": [
+                        {
+                          "config": {
+                            "id": "greaterOrEqual",
+                            "options": {
+                              "value": 0.95
+                            }
+                          },
+                          "fieldName": "Jazda (sum)"
+                        }
+                      ],
+                      "match": "all",
+                      "type": "include"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okrążenie"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "string",
+                          "targetField": "Okrążenie"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Jazda (sum)": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "Okrążenie": "Okr.",
+                        "Wh (sum)": "Zużycie"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "rowsToFields",
+                  "spec": {
+                    "options": {
+                      "mappings": [
+                        {
+                          "fieldName": "Okr.",
+                          "handlerKey": "field.name"
+                        },
+                        {
+                          "fieldName": "Zużycie",
+                          "handlerKey": "field.value"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 20000,
+                "interval": "$estep"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "maxVizHeight": 300,
+                "maxVizWidth": 50,
+                "minVizHeight": 16,
+                "minVizWidth": 30,
+                "namePlacement": "bottom",
+                "orientation": "vertical",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showUnfilled": true,
+                "sizing": "manual",
+                "valueMode": "color"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "watth",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "SoC wg okrążenia — trend do ładowania",
+          "description": "Oś X sięga zawsze do okrążenia, na którym SoC spadnie do 10 % — progu wjazdu do boksu — więc przecięcie jest na prawej krawędzi. Niebieska linia to pomiar, pomarańczowa to trend z tempa spadku z ostatnich $socwin liczonego WYŁĄCZNIE z próbek realnej jazdy (bez pitu, out lapa, flag, ładowania i postoju). Czerwona przerywana to próg. Ostatnie 2 minuty zakresu czasu są technicznym zaczepem: ich współrzędna X rozbiega się do miejsca przecięcia i tam jest ucinana, bo Grafana rysuje tylko tam, gdzie ma dane, a przyszłych okrążeń w bazie nie ma.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "(clamp_max((last_over_time(esc_laps_completed[5m]) + last_over_time(esc_lap_progress_ratio[5m])) + (((((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds})))) + ((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (((scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))) * (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds}))))))) - ((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds}))))) * ((time() >= bool (${__to:date:seconds} - 120)) * ((time() - (${__to:date:seconds} - 120)) / 90)), (((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds})))) + ((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (((scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))) * (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds}))))))) + ((time() - ${__from:date:seconds}) * 0.000000001))",
+                        "instant": false,
+                        "legendFormat": "Okrążenie",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "avg_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$__interval]) and on() (vector(1 - (time() >= bool (${__to:date:seconds} - 120))) > 0) and on() ((last_over_time(esc_laps_completed[5m]) + last_over_time(esc_lap_progress_ratio[5m])) > 0)",
+                        "instant": false,
+                        "legendFormat": "SoC",
+                        "range": true
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - (((scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))) * (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds}))))) * ((clamp_max((last_over_time(esc_laps_completed[5m]) + last_over_time(esc_lap_progress_ratio[5m])) + (((((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds})))) + ((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (((scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))) * (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds}))))))) - ((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds}))))) * ((time() >= bool (${__to:date:seconds} - 120)) * ((time() - (${__to:date:seconds} - 120)) / 90)), (((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds})))) + ((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (((scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))) * (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds}))))))) + ((time() - ${__from:date:seconds}) * 0.000000001)) - ((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds}))))))",
+                        "instant": false,
+                        "legendFormat": "Trend",
+                        "range": true
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "vector(10) and on() ((last_over_time(esc_laps_completed[5m]) + last_over_time(esc_lap_progress_ratio[5m])) > 0)",
+                        "instant": false,
+                        "legendFormat": "Próg 10%",
+                        "range": true
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "outer"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "Okrążenie": "Okr."
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okr."
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 3000,
+                "interval": "30s"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "trend",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "none"
+                },
+                "xField": "Okr."
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "showValues": false,
+                    "spanNulls": true,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "SoC"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.lineWidth",
+                        "value": 3
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Trend"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Próg 10%"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            10,
+                            10
+                          ],
+                          "fill": "dash"
+                        }
+                      },
+                      {
+                        "id": "custom.lineWidth",
+                        "value": 1
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "ŁADOWANIE NA OKRĄŻENIU",
+          "description": "Okrążenie, na którym SoC spadnie do 10 % — wtedy trzeba być w boksie. Liczone od aktualnej pozycji na torze, z tempa spadku wyznaczonego tylko na realnej jeździe.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "vector(floor((scalar(last_over_time(esc_laps_completed[5m] @ ${__to:date:seconds})) + scalar(last_over_time(esc_lap_progress_ratio[5m] @ ${__to:date:seconds}))) + ((((((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))))) / (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds})))))) + 1)",
+                        "instant": true,
+                        "legendFormat": "v",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "none",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "orange"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-12": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Do ładowania",
+          "description": "Ile czasu zostało do progu 10 % SoC przy obecnym tempie spadku.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "clamp_min(vector((((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))))), 0)",
+                        "instant": true,
+                        "legendFormat": "v",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "dthms",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-13": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Okrążeń do ładowania",
+          "description": "Ile okrążeń zostało do progu 10 %, przy medianie czasu okrążenia z ostatnich $socwin.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "clamp_min(vector((((((scalar(last_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[$socwin] @ ${__to:date:seconds}))) - 10) / (scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))))) / (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds}))))), 0)",
+                        "instant": true,
+                        "legendFormat": "v",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "none",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "SoC teraz",
+          "description": "Ostatni znany odczyt SoC w oknie $socwin. Szersze okno niż minuta jest konieczne, bo przy postoju w boksie auto bywa wygaszone i CAN milczy — przy wąskim oknie cała prognoza gasła na NaN.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "vector(scalar(avg_over_time(can_signal{signal=\"BMSMaster_JK_SOC\"}[60s])))",
+                        "instant": true,
+                        "legendFormat": "v",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 0,
+                  "min": 0,
+                  "max": 100,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-15": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Spadek SoC",
+          "description": "Punkty procentowe na okrążenie, liczone WYŁĄCZNIE z próbek podczas realnej jazdy — postój w pitach, out lap, flaga inna niż zielona, ładowanie i stanie w miejscu są wycięte z dopasowania. Bez tego postój spłaszcza spadek i prognoza obiecuje więcej zasięgu niż jest (zmierzone na tym postoju: zaniżenie o 5–9 %).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "vector(((scalar(-deriv((can_signal{signal=\"BMSMaster_JK_SOC\"} and on() (clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[15s]))) < bool 50) or vector(0)), 1), 0) > 0))[$socwin:15s] @ ${__to:date:seconds}))) * (scalar(quantile_over_time(0.5, esc_last_lap_seconds[$socwin] @ ${__to:date:seconds})))))",
+                        "instant": true,
+                        "legendFormat": "v",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "none",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-16": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Granice okrążeń  —  nr / start / koniec",
+          "description": "Surowe granice okrążeń z timingu, po jednym wierszu na okrążenie. Wszystkie pięć metryk ma identyczny znacznik czasu (koniec okrążenia), dlatego wystarczy złączyć je po Time. Znaczniki są w sekundach uniksowych, więc mnożę przez 1000 — jednostki dateTime w Grafanie liczą milisekundy. „Dokładna” = 1 oznacza granicę z rzeczywistego przejazdu przez metę.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "esc_lap_number",
+                        "instant": false,
+                        "legendFormat": "Okrążenie",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "esc_lap_start_timestamp_seconds * 1000",
+                        "instant": false,
+                        "legendFormat": "Start",
+                        "range": true
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "esc_lap_end_timestamp_seconds * 1000",
+                        "instant": false,
+                        "legendFormat": "Koniec",
+                        "range": true
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "esc_lap_duration_seconds",
+                        "instant": false,
+                        "legendFormat": "Czas",
+                        "range": true
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "esc_lap_boundary_exact",
+                        "instant": false,
+                        "legendFormat": "Dokładna",
+                        "range": true
+                      }
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "outer"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okrążenie"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Time": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "Czas": 3,
+                        "Dokładna": 4,
+                        "Koniec": 2,
+                        "Okrążenie": 0,
+                        "Start": 1
+                      },
+                      "renameByName": {}
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 20000,
+                "interval": "15s"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "text"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": false,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Okrążenie"
+                    },
+                    "properties": [
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 100
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "Start|Koniec"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "dateTimeAsIso"
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 220
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Czas"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "dthms"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 140
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Dokładna"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 110
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "0": {
+                                "color": "red",
+                                "index": 1,
+                                "text": "NIE"
+                              },
+                              "1": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "tak"
+                              }
+                            },
+                            "type": "value"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Średnia moc  (MUSI być > 0)",
+          "description": "Kontrola znaku, niezależna od reszty dashboardu. Ujemna wartość przy jeździe = $psign ustawiony odwrotnie i wszystkie liczby zużycia są bez sensu. Bramka tlast_over_time gasi kafelek, gdy CAN milczy dłużej niż minutę — bez niej okno [5m] kurczy się do ostatnich próbek sprzed zaniku i kafelek pokazuje zmyśloną, rosnącą moc.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "($psign * sum(avg_over_time(can_signal{signal=\"BMSMaster_JK_PackCurrent\"}[5m])) * sum(avg_over_time(can_signal{signal=\"BMSMaster_JK_PackVoltage\"}[5m]))) and on() (tlast_over_time(can_signal{signal=\"BMSMaster_JK_PackCurrent\"}[5m]) > time() - 60)",
+                        "instant": true,
+                        "legendFormat": "P",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "watt",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "red"
+                      },
+                      {
+                        "value": 1,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Ostatnie czyste",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 1,
+                        "withTransforms": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "inner"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "groupBy",
+                  "spec": {
+                    "options": {
+                      "fields": {
+                        "Jazda": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Okrążenie": {
+                          "aggregations": [],
+                          "operation": "groupby"
+                        },
+                        "Wh": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "filterByValue",
+                  "spec": {
+                    "options": {
+                      "filters": [
+                        {
+                          "config": {
+                            "id": "greaterOrEqual",
+                            "options": {
+                              "value": 0.95
+                            }
+                          },
+                          "fieldName": "Jazda (sum)"
+                        }
+                      ],
+                      "match": "all",
+                      "type": "include"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okrążenie"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "string",
+                          "targetField": "Okrążenie"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Jazda (sum)": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "Okrążenie": "Okr.",
+                        "Wh (sum)": "Zużycie"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "/^Zużycie$/",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "watth",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Średnio / czyste okr.",
+          "description": "Średnia z okrążeń, które w ≥95 % były realną jazdą. Postoje, out lapy i okrążenia z dziurami w danych nie wchodzą.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 1,
+                        "withTransforms": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "inner"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "groupBy",
+                  "spec": {
+                    "options": {
+                      "fields": {
+                        "Jazda": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Okrążenie": {
+                          "aggregations": [],
+                          "operation": "groupby"
+                        },
+                        "Wh": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "filterByValue",
+                  "spec": {
+                    "options": {
+                      "filters": [
+                        {
+                          "config": {
+                            "id": "greaterOrEqual",
+                            "options": {
+                              "value": 0.95
+                            }
+                          },
+                          "fieldName": "Jazda (sum)"
+                        }
+                      ],
+                      "match": "all",
+                      "type": "include"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okrążenie"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "string",
+                          "targetField": "Okrążenie"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "Okrążenie": "Okr.",
+                        "Wh (sum)": "Zużycie"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "fields": "/^Zużycie$/",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "watth",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Najlepsze okr.",
+          "description": "Numer i zużycie najlepszego okrążenia, liczone tylko z okrążeń, które w ≥95 % były realną jazdą (bez pitu, out lapa, flag, ładowania i dziur w CAN).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 1,
+                        "withTransforms": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "inner"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "groupBy",
+                  "spec": {
+                    "options": {
+                      "fields": {
+                        "Jazda": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Okrążenie": {
+                          "aggregations": [],
+                          "operation": "groupby"
+                        },
+                        "Wh": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "filterByValue",
+                  "spec": {
+                    "options": {
+                      "filters": [
+                        {
+                          "config": {
+                            "id": "greaterOrEqual",
+                            "options": {
+                              "value": 0.95
+                            }
+                          },
+                          "fieldName": "Jazda (sum)"
+                        }
+                      ],
+                      "match": "all",
+                      "type": "include"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Wh (sum)"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "limit",
+                  "spec": {
+                    "options": {
+                      "limitField": 1
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "string",
+                          "targetField": "Okrążenie"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Jazda (sum)": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "Okrążenie": "Okr.",
+                        "Wh (sum)": "Zużycie"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "rowsToFields",
+                  "spec": {
+                    "options": {
+                      "mappings": [
+                        {
+                          "fieldName": "Okr.",
+                          "handlerKey": "field.name"
+                        },
+                        {
+                          "fieldName": "Zużycie",
+                          "handlerKey": "field.value"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "value_and_name",
+                "wideLayout": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "watth",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "green"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Suma",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 1,
+                        "withTransforms": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "inner"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "groupBy",
+                  "spec": {
+                    "options": {
+                      "fields": {
+                        "Okrążenie": {
+                          "aggregations": [],
+                          "operation": "groupby"
+                        },
+                        "Wh": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okrążenie"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "string",
+                          "targetField": "Okrążenie"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "Okrążenie": "Okr.",
+                        "Wh (sum)": "Zużycie"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "sum"
+                  ],
+                  "fields": "/^Zużycie$/",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "watth",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Okrążenie po okrążeniu",
+          "description": "Zielony wiersz to najlepsze okrążenie: najniższe zużycie wśród tych, które były realną jazdą. „Poz.” to miejsce w rankingu, liczone jako pokrycie² / zużycie — okrążenie z dziurami albo z postojem spada na koniec samo z siebie. „Jazda” to udział okrążenia spędzony na realnej jeździe; poniżej 95 % wiersz dostaje wykrzyknik. Wyklucza: pit i out lap, flagę inną niż zielona, ładowanie z ładowarek pokładowych, stanie w miejscu (RPM≈0) i dziury w telemetrii CAN. Nadwyżki powyżej 100 % są ucinane w wyświetlaniu: przy kroku $estep w okrążenie wpada całkowita liczba kratek, więc ich suma wychodzi ±1 krok obok czasu okrążenia (przy 5 s i okrążeniu ~290 s to ±2 %). W rankingu liczy się wartość surowa, więc okrążenia różniące się zużyciem o mniej niż ~2 % mogą się zamienić miejscami — przy tak bliskich wynikach i tak są remisem.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "clamp_min($psign * sum(avg_over_time(can_signal{signal=\"BMSMaster_JK_PackCurrent\"}[$__interval])) * sum(avg_over_time(can_signal{signal=\"BMSMaster_JK_PackVoltage\"}[$__interval])), 0) * $__interval_ms / 3600000",
+                        "instant": false,
+                        "legendFormat": "Wh",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "((first_over_time(esc_lap_number[$lapmax] offset -$lapmax) >= $lapfrom) <= $lapto) and on(car) (first_over_time(esc_lap_start_timestamp_seconds[$lapmax] offset -$lapmax) <= time()) and on(car) (first_over_time(esc_lap_start_timestamp_seconds[$lapmax] offset -$lapmax) >= ${__from:date:seconds})",
+                        "instant": false,
+                        "legendFormat": "Okrążenie",
+                        "range": true
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "first_over_time(esc_lap_duration_seconds[$lapmax] offset -$lapmax)",
+                        "instant": false,
+                        "legendFormat": "Czas",
+                        "range": true
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "$lapkm * 3600 / first_over_time(esc_lap_duration_seconds[$lapmax] offset -$lapmax)",
+                        "instant": false,
+                        "legendFormat": "Prędkość",
+                        "range": true
+                      }
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "clamp_min(1 - clamp_max(last_over_time(esc_in_pit[1m]) + last_over_time(esc_on_out_lap[1m]) + on(event) group_left() (last_over_time(esc_heat_flag_code[1m]) != bool 6) + scalar((sum(abs(last_over_time(can_signal{signal=~\"Charger[0-9]+OutputCurrent\"}[1m]))) > bool 1) or vector(0)) + scalar((avg(abs(avg_over_time(can_signal{signal=~\"LeftMotorRPM|RightMotorRPM\"}[$__interval]))) < bool 50) or vector(0)), 1), 0) * $__interval_ms / 1000 / first_over_time(esc_lap_duration_seconds[$lapmax] offset -$lapmax)",
+                        "instant": false,
+                        "legendFormat": "Jazda",
+                        "range": true
+                      }
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "joinByField",
+                  "spec": {
+                    "options": {
+                      "byField": "Time",
+                      "mode": "inner"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "groupBy",
+                  "spec": {
+                    "options": {
+                      "fields": {
+                        "Czas": {
+                          "aggregations": [
+                            "max"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Jazda": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Okrążenie": {
+                          "aggregations": [],
+                          "operation": "groupby"
+                        },
+                        "Prędkość": {
+                          "aggregations": [
+                            "max"
+                          ],
+                          "operation": "aggregate"
+                        },
+                        "Wh": {
+                          "aggregations": [
+                            "sum"
+                          ],
+                          "operation": "aggregate"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "calculateField",
+                  "spec": {
+                    "options": {
+                      "alias": "!",
+                      "binary": {
+                        "left": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Jazda (sum)"
+                          }
+                        },
+                        "operator": "*",
+                        "right": {
+                          "fixed": "1"
+                        }
+                      },
+                      "mode": "binary",
+                      "reduce": {
+                        "reducer": "sum"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "calculateField",
+                  "spec": {
+                    "options": {
+                      "alias": "cc2",
+                      "binary": {
+                        "left": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Jazda (sum)"
+                          }
+                        },
+                        "operator": "*",
+                        "right": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Jazda (sum)"
+                          }
+                        }
+                      },
+                      "mode": "binary",
+                      "reduce": {
+                        "reducer": "sum"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "calculateField",
+                  "spec": {
+                    "options": {
+                      "alias": "Ranking",
+                      "binary": {
+                        "left": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "cc2"
+                          }
+                        },
+                        "operator": "/",
+                        "right": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Wh (sum)"
+                          }
+                        }
+                      },
+                      "mode": "binary",
+                      "reduce": {
+                        "reducer": "sum"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": true,
+                          "field": "Ranking"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "calculateField",
+                  "spec": {
+                    "options": {
+                      "alias": "idx",
+                      "index": {
+                        "asPercentile": false
+                      },
+                      "mode": "index"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "calculateField",
+                  "spec": {
+                    "options": {
+                      "alias": "Poz.",
+                      "binary": {
+                        "left": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "idx"
+                          }
+                        },
+                        "operator": "+",
+                        "right": {
+                          "fixed": "1"
+                        }
+                      },
+                      "mode": "binary",
+                      "reduce": {
+                        "reducer": "sum"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "Okrążenie"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "string",
+                          "targetField": "Okrążenie"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Ranking": true,
+                        "cc2": true,
+                        "idx": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "!": 0,
+                        "Czas (max)": 2,
+                        "Jazda (sum)": 5,
+                        "Okrążenie": 1,
+                        "Poz.": 6,
+                        "Prędkość (max)": 3,
+                        "Wh (sum)": 4
+                      },
+                      "renameByName": {
+                        "Czas (max)": "Czas okrążenia",
+                        "Jazda (sum)": "Jazda",
+                        "Okrążenie": "Okr.",
+                        "Prędkość (max)": "Śr. prędkość",
+                        "Wh (sum)": "Zużycie"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 20000,
+                "interval": "$estep"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": false,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "text"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": false,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Zużycie"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "watth"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "gradient",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "continuous-GrYlRd"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Czas okrążenia"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "dthms"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 130
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "thresholds"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "text",
+                              "value": 0
+                            },
+                            {
+                              "color": "orange",
+                              "value": 340
+                            },
+                            {
+                              "color": "red",
+                              "value": 400
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Okr."
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 70
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Śr. prędkość"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "velocitykmh"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 120
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "!"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 40
+                      },
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "from": -1000000000,
+                              "result": {
+                                "color": "red",
+                                "index": 0,
+                                "text": "!"
+                              },
+                              "to": 0.9499
+                            },
+                            "type": "range"
+                          },
+                          {
+                            "options": {
+                              "from": 0.95,
+                              "result": {
+                                "index": 1,
+                                "text": " "
+                              },
+                              "to": 1000000000
+                            },
+                            "type": "range"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Jazda"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percentunit"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 90
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "thresholds"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "orange",
+                              "value": 0
+                            },
+                            {
+                              "color": "text",
+                              "value": 0.95
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "from": 1,
+                              "result": {
+                                "index": 0,
+                                "text": "100%"
+                              },
+                              "to": 1000
+                            },
+                            "type": "range"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Poz."
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 60
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "applyToRow": true,
+                          "mode": "basic",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "thresholds"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "dark-green",
+                              "value": 0
+                            },
+                            {
+                              "color": "transparent",
+                              "value": 1.5
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "To samo jako wykres słupkowy  —  X: nr okrążenia",
+          "description": "Wersja z osiami, bez przewijania: przy dużej liczbie okrążeń słupki się zwężają. Do czytania trendu — rosnące zużycie przez stint to spadające napięcie pakietu albo zmęczenie kierowcy.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 7,
+                        "withTransforms": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "filterByValue",
+                  "spec": {
+                    "options": {
+                      "filters": [
+                        {
+                          "config": {
+                            "id": "greaterOrEqual",
+                            "options": {
+                              "value": 0.95
+                            }
+                          },
+                          "fieldName": "Jazda"
+                        }
+                      ],
+                      "match": "all",
+                      "type": "include"
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "filterFieldsByName",
+                  "spec": {
+                    "options": {
+                      "include": {
+                        "pattern": "^(Okr\\.|Zużycie)$"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "barRadius": 0,
+                "barWidth": 0.9,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "orientation": "vertical",
+                "showValue": "auto",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xField": "Okr.",
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 85,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Zużycie"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "watth"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Jak to jest liczone i czego nie ufać",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.1",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "## Skąd się biorą słupki\n\n**Moc chwilowa** — dokładnie wzór z dashboardu *Battery*, panel „Moc [W]”:\n`sum(PackCurrent) × sum(PackVoltage)`. Rozładowanie ma **ujemny** prąd, więc mnożymy przez `$psign = -1`, żeby pobór wychodził dodatni.\n\n**Energia** to suma `moc × krok` po wszystkich krokach `$estep` wpadających w okrążenie. Żadnego przelicznika 3,6 — `W × s / 3600 = Wh` i tyle.\n\n**Granice okrążeń** pochodzą z timingu organizatora, nie z naszego licznika. `esc_lap_number` jest stemplowane **końcem** okrążenia, więc numer okrążenia w toku wyciągamy patrząc **w przód**: `first_over_time(esc_lap_number[$lapmax] offset -$lapmax)` — ujemny offset przesuwa okno w przyszłość, a `first_over_time` bierze z niego najbliższy punkt, czyli najbliższą metę. Granica wypada co do milisekundy tam, gdzie auto ją przecięło, a nie w kratce scrapera.\n\n## Ładowanie: czego tu nie ma\n\nW aucie **nie ma rekuperacji** — jedyne ładowanie w ruchu idzie z paneli, a BMS raportuje **prąd wypadkowy pakietu**, więc wkładu paneli nie da się z tego wyciągnąć osobno. Liczby na wykresie to zatem **energia netto pobrana z pakietu** — czyli dokładnie to, co schodzi ze stanu naładowania.\n\n`clamp_min(…, 0)` zeruje okna, w których pakiet ładował się na plus (panele przebiły pobór albo auto stoi na ładowarce w pitach). Bez tego postój przy ładowarce odjąłby energię od okrążenia i zrobił z niego rekordowo oszczędne.\n\n## Co jest odcinane celowo\n\n- **Okrążenie w toku nie ma jeszcze słupka** — nie istnieje jego granica końcowa. Pojawi się po przejeździe przez metę.\n- **Okrążenie zaczęte przed początkiem zakresu czasu wypada w całości.** Lepiej brak słupka niż słupek ucięty. Brakuje najstarszego — cofnij zakres czasu.\n- **Okrążeń sprzed startu scrapera timingu nie ma i nie będzie.** Pierwsze, jakie mamy, to okrążenie 25 (iESC 2026 Zolder). CAN-a mamy dłużej, ale bez granic nie ma jak go pociąć.\n\n## Dokładność\n\n- Błąd przypisania energii do okrążenia to najwyżej **jeden krok `$estep`** na granicy: przy 5 s i okrążeniu ~290 s to ~1,5 %, i przenosi się między sąsiednimi okrążeniami, więc w sumie wyścigu się znosi.\n- Liczymy `avg(I) × avg(U)` w oknie, nie `avg(I × U)`. Napięcie pakietu zmienia się wolno, w oknie 5 s różnica jest pomijalna.\n- **Okrążenie z postojem albo z urwanym CAN-em pokazuje za mały słupek, wyglądając na oszczędne.** Kolumna „Okien” to jedyne ostrzeżenie: `okien × $estep` powinno wyjść ≈ czas okrążenia. Przykład z tych danych: okrążenie 30 trwało 899 s (postój), CAN urwał się w jego trakcie i weszły 52 okna × 5 s = 260 s — jego 401 Wh to ułamek prawdy. Czas okrążenia powyżej 400 s jest w tabeli podświetlony właśnie po to.\n- **Dziury w telemetrii zaniżają zużycie** — okno bez próbek nie wnosi nic, zamiast wnieść średnią. Od tego jest kolumna „Okien”: `okien × $estep` powinno wyjść ≈ czas okrążenia.\n\n## Zderzenie z innymi liczbami\n\nPierwsze zmierzone okrążenia: 332 / 328 / 384 / 398 / 416 Wh przy 4 km okrążenia to **83–104 Wh/km**, zgodne z niezależnie liczonym 80,6 Wh/km z dashboardu efektywności.\n\nKontrola pojemnością: te same 5 okrążeń to 1,86 kWh przy spadku `BMSMaster_JK_SOC` o 8 pkt proc., czyli **~232 Wh na punkt procentowy** — zgodne ze zmierzonym wcześniej 262 Wh/% (pakiet ~26 kWh). Rozjazd mieści się w niepewności SoC, który jest napięciowy, nie kulombowski, i liczony tu na krótkim oknie.\n\n**Konsekwencja dla dashboardu zasięgu:** liczy on pojemność jako 77 Ah × ~76 V ≈ 5,9 kWh. To jest **ponad cztery razy za mało** — jego prognoza zasięgu jest o tyle zaniżona.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 16,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 0,
+              "width": 8,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 4,
+              "width": 4,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 20,
+              "y": 4,
+              "width": 4,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 8,
+              "width": 4,
+              "height": 3,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 20,
+              "y": 8,
+              "width": 4,
+              "height": 3,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 11,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 14,
+              "y": 22,
+              "width": 10,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 30,
+              "width": 16,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-10"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 30,
+              "width": 8,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-11"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 34,
+              "width": 4,
+              "height": 3,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-12"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 20,
+              "y": 34,
+              "width": 4,
+              "height": 3,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-13"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 37,
+              "width": 4,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-14"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 20,
+              "y": 37,
+              "width": 4,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-15"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 41,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 52,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-16"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "perla",
+      "energia",
+      "okrazenia"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-3h",
+      "to": "now",
+      "autoRefresh": "1m",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Perła — energia na okrążenie",
+    "variables": [
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "DS",
+          "pluginId": "prometheus",
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "current": {
+            "text": "VictoriaMetrics",
+            "value": "victoriametrics"
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "Źródło",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "psign",
+          "query": "-1,1",
+          "current": {
+            "text": "-1",
+            "value": "-1"
+          },
+          "options": [
+            {
+              "selected": true,
+              "text": "-1",
+              "value": "-1"
+            },
+            {
+              "selected": false,
+              "text": "1",
+              "value": "1"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Znak mocy",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "ZWERYFIKOWANE: -1. Rozładowanie ma ujemny PackCurrent (zmierzone -58,5 A przy 76,1 V = 4,45 kW poboru).",
+          "allowCustomValue": true,
+          "valuesFormat": "csv"
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "estep",
+          "query": "1s,2s,5s,10s,15s,30s",
+          "current": {
+            "text": "5s",
+            "value": "5s"
+          },
+          "options": [
+            {
+              "selected": false,
+              "text": "1s",
+              "value": "1s"
+            },
+            {
+              "selected": false,
+              "text": "2s",
+              "value": "2s"
+            },
+            {
+              "selected": true,
+              "text": "5s",
+              "value": "5s"
+            },
+            {
+              "selected": false,
+              "text": "10s",
+              "value": "10s"
+            },
+            {
+              "selected": false,
+              "text": "15s",
+              "value": "15s"
+            },
+            {
+              "selected": false,
+              "text": "30s",
+              "value": "30s"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Krok całkowania",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Rozdzielczość całkowania mocy. Błąd przypisania energii do okrążenia to najwyżej jeden krok. Mniejszy krok = dokładniej i drożej po LTE.",
+          "allowCustomValue": true,
+          "valuesFormat": "csv"
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "lapmax",
+          "query": "10m,20m,30m,60m",
+          "current": {
+            "text": "30m",
+            "value": "30m"
+          },
+          "options": [
+            {
+              "selected": false,
+              "text": "10m",
+              "value": "10m"
+            },
+            {
+              "selected": false,
+              "text": "20m",
+              "value": "20m"
+            },
+            {
+              "selected": true,
+              "text": "30m",
+              "value": "30m"
+            },
+            {
+              "selected": false,
+              "text": "60m",
+              "value": "60m"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Maks. długość okrążenia",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Okno wyprzedzające, którym szukamy najbliższej mety. Musi być dłuższe niż najdłuższe okrążenie razem z postojem w pitach.",
+          "allowCustomValue": true,
+          "valuesFormat": "csv"
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "lapkm",
+          "current": {
+            "text": "4",
+            "value": "4"
+          },
+          "query": "4",
+          "label": "Długość okrążenia [km]",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Z esc_track_length_meters: 4000 m dla iESC 2026 Zolder. Wh/km = Zużycie / ta liczba."
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "lapfrom",
+          "current": {
+            "text": "0",
+            "value": "0"
+          },
+          "query": "0",
+          "label": "Od okrążenia",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Pokazuj okrążenia o numerze >= tej wartości. Filtruje WEWNĄTRZ zakresu czasu — okrążenia spoza zakresu czasu i tak nie istnieją."
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "lapto",
+          "current": {
+            "text": "9999",
+            "value": "9999"
+          },
+          "query": "9999",
+          "label": "Do okrążenia",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Pokazuj okrążenia o numerze <= tej wartości. 9999 = bez górnej granicy."
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "socwin",
+          "query": "15m,30m,45m,1h,2h",
+          "current": {
+            "text": "45m",
+            "value": "45m"
+          },
+          "options": [
+            {
+              "selected": false,
+              "text": "15m",
+              "value": "15m"
+            },
+            {
+              "selected": false,
+              "text": "30m",
+              "value": "30m"
+            },
+            {
+              "selected": true,
+              "text": "45m",
+              "value": "45m"
+            },
+            {
+              "selected": false,
+              "text": "1h",
+              "value": "1h"
+            },
+            {
+              "selected": false,
+              "text": "2h",
+              "value": "2h"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Okno trendu SoC",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Z jak długiego kawałka liczony jest spadek SoC na kafelkach. Krótsze okno = szybsza reakcja na zmianę tempa, dłuższe = spokojniejsza prognoza. Musi mieścić się w bieżącym stincie — okno obejmujące ładowanie da bzdurę.",
+          "allowCustomValue": true,
+          "valuesFormat": "csv"
+        }
+      }
+    ]
+  }
+}
